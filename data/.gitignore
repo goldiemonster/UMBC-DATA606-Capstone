@@ -1,0 +1,12 @@
+# Raw authoritative downloads are reproducible and too large for normal Git.
+raw/usaspending/contracts/*.zip
+raw/usaspending/contracts/*.csv
+
+# Processed large datasets should also remain local unless deliberately sampled.
+processed/*.csv
+processed/*.parquet
+processed/*.feather
+
+# Keep manifests and documentation trackable.
+!raw/usaspending/contracts/manifest.csv
+!raw/**/README.md
