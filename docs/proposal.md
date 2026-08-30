@@ -6,9 +6,7 @@
 - Prepared for the UMBC Data Science Master's Degree Capstone by Dr. Chaojie (Jay) Wang
 - **Author:** Edmund L. Goldsberry
 - **GitHub repository:** https://github.com/goldiemonster/UMBC-DATA606-Capstone
-- **LinkedIn profile:** _TBD — to be added_
-- **PowerPoint presentation:** _TBD — added when the presentation is complete_
-- **YouTube video:** _TBD — added when the presentation is complete_
+
 
 ## 2. Background
 
