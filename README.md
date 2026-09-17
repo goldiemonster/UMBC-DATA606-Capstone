@@ -1,39 +1,65 @@
-# Data
+# BridgeWatch AI
 
-Bridge inventory data from the FHWA [National Bridge Inventory](https://www.fhwa.dot.gov/bridge/nbi/ascii.cfm)
-(NBI) for the BridgeWatch AI capstone project.
+Predicting bridge condition deterioration from federal inspection records, for the UMBC DATA 606 Capstone.
 
-## Contents
+**Author:** Edmund L. Goldsberry
+**Prepared for:** UMBC Data Science Master's Degree Capstone, Dr. Chaojie (Jay) Wang
+**Repository:** https://github.com/goldiemonster/UMBC-DATA606-Capstone
 
-- **`{STATE}{YY}.txt`** — 42 raw files: 7 states (CA, FL, MD, MI, NY, TX, WA) × 6 years (2020–2025, encoded
-  as `20`–`25`). Comma-delimited, one row per bridge, 123 columns, identical schema across every file. Column
-  names embed their official NBI item number from FHWA's *Recording and Coding Guide for the Structure
-  Inventory and Appraisal of the Nation's Bridges* (e.g. `YEAR_BUILT_027` = Item 27).
-- **`processed/bridge_deterioration_dataset.csv.gz`** — the model-ready dataset built in
-  [`../notebooks/eda.ipynb`](../notebooks/eda.ipynb): each row pairs one bridge's record in year *A* (features)
-  with whether its condition rating dropped by year *A+1* (`deteriorated_next_period` label). Gzip-compressed
-  to stay under GitHub's 100 MB per-file limit; read it with `pd.read_csv(path, compression="gzip")` (pandas
-  also infers this automatically from the `.gz` extension).
-- **`processed/weather_annual_by_bridge.csv.gz`** — annual climate features per bridge, built by
-  [`../scripts/fetch_nclimgrid_weather.py`](../scripts/fetch_nclimgrid_weather.py) from NOAA's
-  [nClimGrid-Daily](https://www.ncei.noaa.gov/products/land-based-station/nclimgrid-daily) gridded product
-  (daily tmax/tmin/tavg/prcp, ~5 km resolution, CONUS, public S3 bucket `noaa-nclimgrid-daily-pds`). Covers the
-  same **2020–2025** years as the raw NBI inspection files above. Each bridge (`STRUCTURE_NUMBER_008`) is
-  matched to its nearest nClimGrid-Daily grid cell using the `lat`/`lon` already decoded in
-  `bridge_deterioration_dataset.csv.gz`, and daily values are aggregated per bridge per year into:
-  - `tmax_mean_c`, `tmin_mean_c`, `tavg_mean_c` — annual mean daily max/min/average temperature (°C)
-  - `prcp_total_mm` — annual total precipitation (mm)
-  - `freeze_thaw_days` — count of days where `tmax > 0°C` and `tmin < 0°C` (freeze/thaw cycling, relevant to
-    deck and joint deterioration)
+## What this project does
 
-  Join onto the bridge dataset via `STRUCTURE_NUMBER_008` + `YEAR`. Raw nClimGrid-Daily netCDF files
-  (~4.6 GB total across 72 monthly files) are downloaded and discarded by the script — only this aggregated
-  output is stored in the repo.
+Every U.S. highway bridge is inspected on a regular cycle under the National Bridge Inspection Standards, and
+the results are reported to the Federal Highway Administration as part of the National Bridge Inventory (NBI).
+This project uses six years of NBI records (2020 to 2025) across seven states (California, Florida, Maryland,
+Michigan, New York, Texas, Washington), combined with NOAA weather data, to predict whether a bridge's
+condition rating will decline by its next inspection. The end goal is a Streamlit app that lets a user look up
+a bridge or browse a state map of bridges color coded by predicted risk, and see the factors driving that
+score.
 
-  **Known gap:** ~1,904 bridges (1.4% of the 140,268 with usable coordinates) have `NaN` temperature columns
-  in every year — their nearest grid cell falls outside nClimGrid-Daily's valid land coverage (e.g. immediately
-  offshore/at a shoreline). `prcp_total_mm` and `freeze_thaw_days` are unaffected for these rows. Most
-  concentrated in FL (575 bridges) and CA (358), consistent with long coastlines.
+Three research questions guide the project:
 
-See [`../docs/proposal.md`](../docs/proposal.md) for the full data dictionary, target/feature definitions, and
-data-quality findings.
+1. Can machine learning predict whether a bridge's condition rating will decline by its next inspection cycle,
+   using only information available at the time of the current inspection?
+2. Which factors are the strongest predictors of near term deterioration: age, traffic volume, construction
+   material, scour vulnerability, or time since last inspection?
+3. Does deterioration risk vary by state or region in a way that suggests climate or maintenance practice
+   effects, separate from a bridge's own attributes?
+
+See [`docs/proposal.md`](docs/proposal.md) for the full proposal, data dictionary, and research background.
+
+## Project status
+
+- Data pipeline: done. Raw NBI files and NOAA weather features are pulled together into a model ready dataset.
+- Exploratory data analysis: done, in [`notebooks/eda.ipynb`](notebooks/eda.ipynb).
+- Model training: in progress, in [`notebooks/`](notebooks) (built step by step, one function at a time).
+- Streamlit app: not started yet. Will live in [`app/`](app).
+
+## Repository structure
+
+```
+data/         Raw NBI files, NOAA weather data, and the processed model ready datasets
+notebooks/    EDA and model training notebooks
+scripts/      Standalone data pipeline scripts (weather fetch, current risk snapshot)
+app/          Streamlit application (in progress)
+docs/         Project proposal, data dictionary, and supporting materials
+```
+
+Each of these folders has its own README with more detail: [`data/README.md`](data/README.md),
+[`notebooks/README.md`](notebooks/README.md), [`app/README.md`](app/README.md).
+
+## Data
+
+- **Bridge inventory:** FHWA National Bridge Inventory, 7 states, 6 annual snapshots (2020 to 2025). See
+  [`data/README.md`](data/README.md) for the raw file layout and the processed dataset's columns.
+- **Weather:** NOAA nClimGrid-Daily, aggregated to annual temperature and precipitation summaries per bridge,
+  covering the same 2020 to 2025 period. Also documented in [`data/README.md`](data/README.md).
+
+## Getting started
+
+Clone the repository and open the notebooks in order:
+
+1. [`notebooks/eda.ipynb`](notebooks/eda.ipynb): builds the processed bridge dataset and the weather features,
+   and walks through the data quality checks behind them.
+2. `notebooks/model_training.ipynb`: trains the deterioration prediction model (in progress).
+
+Once the Streamlit app is built, it will be run locally with `streamlit run app/app.py`.
