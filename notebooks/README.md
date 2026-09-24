@@ -21,13 +21,6 @@ version.
 | `model_training_step3.ipynb` | Step 3: time based split, training on transitions ending 2021 to 2024 and testing on 2025 |
 | `model_training_step_4.ipynb` | Step 4: preprocessing and Logistic Regression pipeline, fit on the training set |
 
-Steps still to come, per [`../docs/project_plan.md`](../docs/project_plan.md):
-
-5. Add the state bridge spending feature and refit.
-6. Evaluate both models on the 2025 holdout.
-7. Rank the model's coefficients to show which features drive risk.
-8. Save the trained model for the Streamlit app.
-
 ## Running the notebooks
 
 The notebooks need `pandas`, `numpy`, `scikit-learn`, and `plotly`. If Jupyter reports a missing module even after
