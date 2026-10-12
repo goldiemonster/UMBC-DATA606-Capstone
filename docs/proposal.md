@@ -258,7 +258,4 @@ it made the predictions worse.
   zero. Research question 4 is answered by comparing the model with and without the spending feature. Research
   question 3 is answered by comparing it with and without the weather features.
 
-The step by step plan for the remaining work is in [`project_plan.md`](project_plan.md). The exploratory analysis
-(schema validation across all 112 files, data quality findings, feature distributions, the label construction, and
-the weather and spending data) is in [`notebooks/eda.ipynb`](../notebooks/eda.ipynb), and the model training is in
-[`notebooks/model_training_step_9.ipynb`](../notebooks/model_training_step_9.ipynb).
+
