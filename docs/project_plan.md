@@ -1,7 +1,7 @@
 # BridgeWatch AI: Project Plan
 
-This plan covers where the project stands and the remaining work: saving the trained model, building the inputs the
-app needs, and building the Streamlit app. The project uses three data sources: the bridge inventory and weather
+This plan covers where the project stands and the remaining work. The model is trained, saved, and checked, and the
+inputs the app needs are built, so the Streamlit app is the last piece. The project uses three data sources: the bridge inventory and weather
 data (2010 to 2025) and state bridge repair spending from FHWA Highway Statistics Table SF-12A (2020 to 2024).
 
 ## Where the project stands
@@ -16,9 +16,9 @@ data (2010 to 2025) and state bridge repair spending from FHWA Highway Statistic
 | Model training, loading and joining, features, split, fit, evaluation | Done |
 | Model training, comparing weather and spending, final model, interpretability | Done |
 | Model training on the full 2010 to 2025 history (`model_training_step_9.ipynb`) | Done |
-| Saving the trained model | Not started |
-| Current risk snapshot for the app | Script written, needs to be re-run with the corrected weather |
-| Streamlit app | Not started |
+| Saving the trained model (`model_training_step_10.ipynb`) | Done, saved to `app/model/deterioration_model.joblib` |
+| Current risk snapshot for the app | Done, `data/processed/bridge_current_risk_input.csv.gz` (139,079 bridges, 2025 weather) |
+| Streamlit app | Not started. This is the last piece |
 
 ## Research questions
 
@@ -44,6 +44,14 @@ data (2010 to 2025) and state bridge repair spending from FHWA Highway Statistic
    accounting for everything else (Washington is lowest, California, New York, and Michigan highest).
 4. **Spending.** Adding spending per bridge made the predictions worse (a ROC AUC change of -0.0057, with the whole
    95% range below zero), so it is not used to score bridges.
+
+**What the score means.** The model's raw scores run far too high as probabilities (they average 44% when only 4.5% of
+bridges really dropped), because balanced class weights inflate them. Step 10 corrects them with one fixed shift in the
+log odds, and the corrected chances track the real drop rates closely (for example, 12.9% predicted against 14.1% actual in
+the top tenth of bridges). The app shows three tiers. A High tier bridge (the top 10%) dropped 14.1% of the time in 2025,
+against 7.0% for Medium and 2.5% for Low, and the High tier holds 31% of all the drops. One caution: High does not mean
+"in bad shape". The bridges most likely to drop are the ones rated 8 or 9, which have the furthest to fall, and most
+bridges rated Poor land in the Low tier. The app has to say this plainly.
 
 ## The three data sources
 
@@ -108,7 +116,7 @@ repair from 2020 to 2023.
 
 ## Remaining work
 
-### Part A: finish model training
+### Part A: model training (done)
 
 The model training notebook was built step by step (see [`../notebooks/README.md`](../notebooks/README.md)), and
 `model_training_step_9.ipynb` now holds every step on the full 2010 to 2025 history:
@@ -123,31 +131,38 @@ The model training notebook was built step by step (see [`../notebooks/README.md
 * The final model and its interpretation (coefficients, odds multipliers, and an `explain_bridge()` function whose
   contributions add up exactly to the model's score).
 
-**Step 10: save the model.**
+**Step 10: save the model (done, `model_training_step_10.ipynb`).**
 
-* Save the final pipeline, its feature lists, its test metrics, the training choice it used, and its coefficient
-  table to `app/model/deterioration_model.joblib`.
-* Reload it in a fresh session and confirm it gives the same predictions as the notebook.
+* Corrects the raw scores into real probabilities and defines the Low, Medium, and High risk tiers (the cutoffs are a
+  corrected chance of 4.7% for Medium and 8.3% for High).
+* Saves the final pipeline, its feature lists, the probability shift, the tier cutoffs, its test metrics, its coefficient
+  table, a description of the training data, and the library versions to `app/model/deterioration_model.joblib`
+  (about 19 KB).
+* Tests the helper functions in [`../app/scoring.py`](../app/scoring.py) against the notebook, and reloads the saved model in a fresh
+  Python process to confirm it gives identical scores.
 
-### Part B: current risk snapshot for the app
+### Part B: current risk snapshot for the app (done)
 
 `scripts/build_current_risk_snapshot.py` builds each bridge's most recent (2025) record, joined with 2025 weather,
 so the app can score current risk without reading the raw inventory files.
 
-* The snapshot has to be re-run, because the existing `bridge_current_risk_input.csv.gz` was built with the old weather
-  files. The script now reads `data/weather_annual_by_bridge_2025.csv` and joins on the bridge ID and the state.
-* The final model does not use spending, so the snapshot does not need spending features to score bridges. The app
-  can show each state's most recent spending per bridge (2024, labelled as such) as background only.
-* A bridge with no usable 2025 coordinate gets the median latitude and longitude when scored, as in training. The EDA
-  fills such gaps from a bridge's earlier years, and the snapshot could do the same.
+* The snapshot was re-built with the corrected weather. It joins on the bridge ID and the state, and a missing 2025
+  coordinate is filled from the bridge's earlier years, as in the training data (525 bridges lacked a usable coordinate,
+  and 53 still do after filling).
+* The final model does not use spending, so scoring does not need spending features. The app can show each state's most
+  recent spending per bridge (2024, labelled as such) as background only.
+* All 139,079 bridges have every column the model needs, and scoring them gives about 10% High, 21% Medium, and 69% Low.
 
 ### Part C: Streamlit app
 
 * **Bridge Lookup page:** pick a state and a bridge, and see its predicted risk, its key attributes, and the top
   factors behind the score. It will also show the state's recent bridge repair spending per bridge as context.
 * **State Risk Map page:** a map of a state's bridges colored by predicted risk.
-* The app should explain what the score means: the chance that the bridge's lowest condition rating drops by one
-  or more points at its next inspection, not the chance that it becomes unsafe.
+* The app should explain what the score means: the estimated chance that the bridge's lowest condition rating drops by
+  one or more points at its next inspection, not the chance that it becomes unsafe. It should show the bridge's current
+  condition next to its tier, because the High tier is mostly bridges rated 8 or 9.
+* Scoring and explanations use `app/scoring.py` (`load_model`, `score_bridges`, `explain_bridge`), so both pages share one
+  code path.
 * Runs locally with `streamlit run app/app.py`.
 
 ## What the spending experiment found

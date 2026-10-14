@@ -255,6 +255,10 @@ it made the predictions worse.
   transitions ending before 2024): all years, all years without California's 2016 to 2020 transitions, and 2020 on
   only. Using a validation year keeps the 2025 test set out of the decision. The choice without California's swing
   years is used (1,720,718 training rows).
+- **Scores and risk tiers:** `class_weight="balanced"` inflates the model's raw scores (they average 44% when 4.5% of
+  test bridges really dropped), so the scores are corrected with a fixed shift in the log odds, equal to the log odds of a
+  drop in the training data. This does not change the ranking. The app groups bridges into three tiers by the corrected
+  chance: High is the top 10% of the 2025 test bridges, Medium the next 20%, and Low the rest.
 - **Evaluation:** ROC AUC, average precision (area under the precision recall curve), precision and recall, and the
   capture rate (the share of the bridges that dropped that are found in the top 5%, 10%, 20% and so on of the risk
   ranking), on the 2025 test set. A random ranking would score a ROC AUC of 0.5 and an average precision equal to
@@ -266,4 +270,4 @@ it made the predictions worse.
 The step by step plan for the remaining work is in [`project_plan.md`](project_plan.md). The exploratory analysis
 (schema validation across all 112 files, data quality findings, feature distributions, the label construction, and
 the weather and spending data) is in [`notebooks/eda.ipynb`](../notebooks/eda.ipynb), and the model training is in
-[`notebooks/model_training_step_9.ipynb`](../notebooks/model_training_step_9.ipynb).
+[`notebooks/model_training_step_10.ipynb`](../notebooks/model_training_step_10.ipynb).
