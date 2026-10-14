@@ -35,10 +35,11 @@ See [`docs/proposal.md`](docs/proposal.md) for the full proposal and data dictio
 - **Data:** done. Bridge inventory and weather for 2010 to 2025, and state bridge spending for 2020 to 2024, are all
   cleaned and in [`data/`](data).
 - **Exploratory data analysis:** done for all three data sources, in [`notebooks/eda.ipynb`](notebooks/eda.ipynb).
-- **Model training:** done through interpretability, in [`notebooks/`](notebooks). The newest notebook,
-  [`model_training_step_9.ipynb`](notebooks/model_training_step_9.ipynb), has every step and uses the full
-  2010 to 2025 history. Next up: saving the trained model.
-- **Streamlit app:** not started yet. Will live in [`app/`](app).
+- **Model training:** done, in [`notebooks/`](notebooks). The newest notebook,
+  [`model_training_step_10.ipynb`](notebooks/model_training_step_10.ipynb), has every step on the full 2010 to 2025
+  history, and it saves the trained model to `app/model/deterioration_model.joblib`.
+- **Current risk snapshot:** done. Each bridge's 2025 record with 2025 weather, ready for the app to score.
+- **Streamlit app:** not started yet. Will live in [`app/`](app). It is the last piece.
 
 ## What the model has found so far
 
@@ -52,6 +53,9 @@ See [`docs/proposal.md`](docs/proposal.md) for the full proposal and data dictio
   can still be shown in the app as background about each state.
 - The older years (2010 to 2019) help, but only after leaving out California's 2016 to 2020 transitions, when its
   ratings swung sharply in a way that does not look like real wear.
+- The model's raw scores run far too high as probabilities, so they are corrected before the app shows them. A bridge in
+  the High risk tier (the top 10%) dropped 14.1% of the time in 2025, against 2.5% for the Low tier. High means a rating
+  drop is likely, not that the bridge is in bad shape: the bridges most likely to drop are the ones rated 8 or 9.
 
 ## Data
 
@@ -89,7 +93,7 @@ Then open the notebooks in order:
 
 1. [`notebooks/eda.ipynb`](notebooks/eda.ipynb): builds the model ready bridge dataset, walks through the data
    quality checks behind it, and explores the weather and state spending data.
-2. [`notebooks/model_training_step_9.ipynb`](notebooks/model_training_step_9.ipynb): the complete model training
+2. [`notebooks/model_training_step_10.ipynb`](notebooks/model_training_step_10.ipynb): the complete model training
    notebook. It loads its data straight from this GitHub repository, so it runs without downloading anything. The
    earlier model training notebooks show how it was built up one step at a time (see
    [`notebooks/README.md`](notebooks/README.md)).
