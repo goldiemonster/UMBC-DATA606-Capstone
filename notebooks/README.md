@@ -27,11 +27,12 @@ snapshot that contains every step up to and including its own, so the newest fil
 | `model_training_step_7.ipynb` | Builds the final model (bridge and weather features, no spending) |
 | `model_training_step_8.ipynb` | Interprets the final model: which features raise or lower risk, and how to explain a single bridge's score |
 | `model_training_step_9.ipynb` | Extends everything to the full 2010 to 2025 history and chooses how much history to train on |
+| `model_training_step_10.ipynb` | Saves the final model for the app: corrects the scores into real probabilities, defines the Low, Medium, and High risk tiers, writes `app/model/deterioration_model.joblib`, and checks that the saved file gives identical scores in a fresh Python process |
 
 The notebooks up to `model_training_step_8.ipynb` were built on the original 2020 to 2025 data, and they read the
 original single file `bridge_deterioration_dataset.csv.gz`, which has since been replaced by the 15 yearly files. They
 are kept to show how the work progressed, and they only run if you still have that single file locally.
-**`model_training_step_9.ipynb` is the current, complete version and runs against the repository as it is now.**
+**`model_training_step_10.ipynb` is the current, complete version and runs against the repository as it is now.** It is `model_training_step_9.ipynb` plus Section 9, which prepares and saves the model.
 
 What step 9 changes compared with step 8:
 
@@ -47,10 +48,16 @@ What step 9 changes compared with step 8:
   bootstrap range for that gain is +0.0025 to +0.0062.
 - Section 8 reads the coefficients of the new final model.
 
-Steps still to come, per [`../docs/project_plan.md`](../docs/project_plan.md):
+What step 10 adds:
 
-1. Save the trained model for the Streamlit app.
-2. Build the current risk snapshot and the app itself.
+- The raw model scores are far too high as probabilities (they average 44% when only 4.5% of bridges really dropped), because
+  balanced class weights inflate them. Section 9 corrects them with one fixed shift in the log odds. The corrected chances
+  track the real drop rates closely, and the ranking of bridges does not change.
+- The High tier (the top 10% of bridges) holds 31% of the drops, and a High tier bridge dropped 14.1% of the time,
+  against 2.5% in the Low tier.
+- The helper functions the app calls are in [`../app/scoring.py`](../app/scoring.py), and this notebook tests them.
+
+Still to come, per [`../docs/project_plan.md`](../docs/project_plan.md): the Streamlit app itself.
 
 ## Running the notebooks
 
