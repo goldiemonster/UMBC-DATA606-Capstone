@@ -1,11 +1,10 @@
 """Build the current (2025) per-bridge feature snapshot the Streamlit app scores.
 
-The training dataset's newest *feature* year is 2024 (2025 is only ever used as a label
-year, to check whether a bridge deteriorated). To show forward-looking risk in the app, we
-need each bridge's most recent snapshot -- 2025 NBI features + 2025 weather, with no label --
-using the exact same columns/cleaning as the training feature set (see notebooks/model_training.ipynb),
-so the app can feed rows straight into the trained pipeline without reparsing raw NBI files or
-weather netCDF grids at runtime.
+The model is trained on transitions that start in 2010 to 2024, and 2025 is only ever used to check whether a
+bridge deteriorated. To show forward-looking risk in the app, we need each bridge's most recent snapshot: the 2025
+NBI features plus the 2025 weather, with no label. It uses the same columns and cleaning as the training feature
+set (see notebooks/model_training_step_9.ipynb), so the app can feed rows straight into the trained model without
+reparsing raw NBI files or weather netCDF grids at runtime.
 
 Usage:
     python scripts/build_current_risk_snapshot.py
@@ -43,9 +42,40 @@ def load_snapshot() -> pd.DataFrame:
     return df
 
 
+def fill_missing_coordinates(df: pd.DataFrame) -> pd.DataFrame:
+    """Fill a missing 2025 coordinate from the same bridge's earlier years.
+
+    A bridge does not move, and the training data was cleaned the same way (see eda.ipynb, Section 6). Only gaps
+    are filled; a valid 2025 coordinate is never overwritten.
+    """
+    df = df.copy()
+    df.loc[df["lat"].isna() | df["lon"].isna(), ["lat", "lon"]] = np.nan
+    before = int(df["lat"].isna().sum())
+    for year in reversed(nbi.YEARS[:-1]):  # 2024 back to 2010
+        needs = df["lat"].isna()
+        if not needs.any():
+            break
+        for state in nbi.STATES:
+            wanted = set(df.loc[needs & (df["STATE"] == state), nbi.KEY])
+            if not wanted:
+                continue
+            old = nbi.load(state, year, usecols=[nbi.KEY, "LAT_016", "LONG_017"])
+            old = old[old[nbi.KEY].isin(wanted)]
+            if old.empty:
+                continue
+            old, _ = nbi.decode_and_validate_coords(old)
+            old = old.dropna(subset=["lat", "lon"]).drop_duplicates(nbi.KEY, keep=False).set_index(nbi.KEY)
+            rows = df.index[needs & (df["STATE"] == state) & df[nbi.KEY].isin(old.index)]
+            df.loc[rows, ["lat", "lon"]] = old.loc[df.loc[rows, nbi.KEY], ["lat", "lon"]].to_numpy()
+    print(f"Bridges with no usable coordinate: {before} in {SNAPSHOT_YEAR}, "
+          f"{int(df['lat'].isna().sum())} after filling from earlier years")
+    return df
+
+
 def main() -> None:
     df = load_snapshot()
     print(f"Loaded {len(df)} bridges in the {SNAPSHOT_YEAR} snapshot")
+    df = fill_missing_coordinates(df)
 
     weather = pd.read_csv(SNAPSHOT_WEATHER_PATH)
     weather_year = weather.loc[weather["YEAR"] == SNAPSHOT_YEAR].drop(columns="YEAR")
