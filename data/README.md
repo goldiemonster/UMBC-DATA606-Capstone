@@ -15,6 +15,7 @@ Texas, and Washington. The spending data covers 2020 to 2024.
 |---|---|---|---|
 | `{STATE}{YY}.txt` (112 files) | Raw bridge inventory records | 2,147,605 in total, one per bridge per year | `STRUCTURE_NUMBER_008` + state |
 | `processed/bridge_deterioration_dataset_{YEAR}.csv.gz` (15 files) | Model ready bridge dataset | 1,985,801 in total | `STRUCTURE_NUMBER_008` + `STATE` + `from_year` |
+| `processed/bridge_current_risk_input.csv.gz` | Each bridge's 2025 record plus 2025 weather, the table the app scores | 139,079 | `STRUCTURE_NUMBER_008` + `STATE` |
 | `weather_annual_by_bridge_{YEAR}.csv` (16 files) | Annual weather per bridge | 2,146,854 in total, one per bridge per year | `STRUCTURE_NUMBER_008` + `STATE` + `YEAR` |
 | `sf12a_state_bridge_spending_2020_2024.csv` | Annual bridge spending per state | 35 | `state` + `year` |
 
@@ -81,6 +82,16 @@ Some things about how it was built:
   California transitions ending 2016 to 2020, because training on them made the model worse.
 - The truck share of traffic (`PERCENT_ADT_TRUCK_109`) is missing for about 13% of bridges in 2010 to 2017 and 1.7%
   from 2018 on. Almost all of the gap is Texas, where about 30% of bridges have no truck share before 2018.
+
+### Current risk snapshot: `processed/bridge_current_risk_input.csv.gz`
+
+Built by [`../scripts/build_current_risk_snapshot.py`](../scripts/build_current_risk_snapshot.py). One row per bridge in the
+2025 inventory (139,079 bridges), with the 30 columns the app needs: the 26 feature columns the models were trained on, the
+bridge ID and state, the bridge's overall condition (`BRIDGE_CONDITION`), and the road it carries and its location
+(`FACILITY_CARRIED_007` and `LOCATION_009`, cleaned of quotes and extra spaces, which the app shows and searches). It joins
+the 2025 inventory to the 2025 weather file on the bridge ID and the state, and a missing 2025 coordinate is filled from the
+bridge's earlier years, as in the model ready dataset. It has no label, since 2025 is the newest year. Read the categorical
+code columns and the bridge ID as text (`dtype=str`).
 
 ### Weather: `weather_annual_by_bridge_2010.csv` through `weather_annual_by_bridge_2025.csv`
 
