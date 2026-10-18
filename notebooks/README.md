@@ -28,11 +28,12 @@ snapshot that contains every step up to and including its own, so the newest fil
 | `model_training_step_8.ipynb` | Interprets the final model: which features raise or lower risk, and how to explain a single bridge's score |
 | `model_training_step_9.ipynb` | Extends everything to the full 2010 to 2025 history and chooses how much history to train on |
 | `model_training_step_10.ipynb` | Saves the final model for the app: corrects the scores into real probabilities, defines the Low, Medium, and High risk tiers, writes `app/model/deterioration_model.joblib`, and checks that the saved file gives identical scores in a fresh Python process |
+| `model_training_step_11.ipynb` | Builds and saves a second model for the question "will a bridge that is not Poor yet fall into Poor?", writes `app/model/poor_condition_model.joblib`, and scores today's bridges with both models |
 
 The notebooks up to `model_training_step_8.ipynb` were built on the original 2020 to 2025 data, and they read the
 original single file `bridge_deterioration_dataset.csv.gz`, which has since been replaced by the 15 yearly files. They
 are kept to show how the work progressed, and they only run if you still have that single file locally.
-**`model_training_step_10.ipynb` is the current, complete version and runs against the repository as it is now.** It is `model_training_step_9.ipynb` plus Section 9, which prepares and saves the model.
+**`model_training_step_11.ipynb` is the current, complete version and runs against the repository as it is now.** It is `model_training_step_10.ipynb` plus Section 10, which builds the second model.
 
 What step 9 changes compared with step 8:
 
@@ -57,7 +58,21 @@ What step 10 adds:
   against 2.5% in the Low tier.
 - The helper functions the app calls are in [`../app/scoring.py`](../app/scoring.py), and this notebook tests them.
 
-Still to come, per [`../docs/project_plan.md`](../docs/project_plan.md): the Streamlit app itself.
+What step 11 adds:
+
+- The first model's High tier is mostly bridges rated 8 or 9, and its ROC AUC for finding the bridges that fall into Poor is only
+  0.55. Section 10 builds a second model for that question, with the same features, the same Logistic Regression, the same
+  time based split, and a validation year to choose the training history (again all years without California's 2016 to 2020
+  transitions).
+- It is much better at its own question: a ROC AUC of 0.89, and its top 20% of bridges contain 84% of the bridges that fell into
+  Poor in 2025 (the first model's top 20% contain 29%).
+- Falling into Poor is rare (about 0.6% of bridges), so the fixed shift used for the first model overstates the highest scores.
+  This model's scores are corrected with a slope and intercept fitted on the validation year, which makes the top of the ranking
+  match what really happened.
+- Bridges that are already Poor are not scored by this model. The app shows them as "Already Poor".
+- The two views disagree a lot: only 0.7% of the bridges above Poor are High tier in both. The app offers both.
+
+The notebooks are finished. The Streamlit app that uses the saved models is in [`../app/`](../app).
 
 ## Running the notebooks
 
