@@ -218,6 +218,12 @@ versus 1,881,600 stable or improved). That is roughly an 18 to 1 imbalance, whic
 class weighting, and which is why the model is judged on ROC AUC, average precision, and how many of the bridges that
 dropped it finds near the top of its ranking, rather than raw accuracy.
 
+A second label supports a second view in the app. `falls_into_poor` is defined only for bridges that are not Poor at the
+start of the transition (`LOWEST_RATING` of 5 or higher). It is **1** if the *next* record's `LOWEST_RATING` is 4 or below,
+which is FHWA's definition of Poor condition, and **0** otherwise. Of the 1,886,465 transitions that start above Poor, 13,109
+(0.69%) end in Poor, so it is a much rarer event than any rating drop. A bridge rated 5 falls into Poor 3.0% of the time, a bridge
+rated 6 only 0.46%, and a bridge rated 7 or higher 0.15% or less.
+
 The rate is not steady across states and years. California's is 23% and 25% for transitions ending in 2017 and 2018
 (against 3 to 7% in most other years), after about a quarter of its ratings went up in 2016. That looks like a change
 in how ratings were assigned and not real wear, so the final model leaves out California transitions ending in 2016
@@ -259,6 +265,11 @@ it made the predictions worse.
   test bridges really dropped), so the scores are corrected with a fixed shift in the log odds, equal to the log odds of a
   drop in the training data. This does not change the ranking. The app groups bridges into three tiers by the corrected
   chance: High is the top 10% of the 2025 test bridges, Medium the next 20%, and Low the rest.
+- **Second model, for falling into Poor:** the same features, Logistic Regression, time based split, and validation year
+  method, trained on the bridges that start above Poor. Falling into Poor is rare, so its scores are corrected with a slope
+  and an intercept fitted on the validation year (a fixed shift leaves the highest scores too high). Bridges that are already
+  Poor are not scored. On the 2025 test set it has a ROC AUC of 0.89 for this question, and its High tier holds 59% of the
+  bridges that fell into Poor. The first model's ROC AUC for the same question is 0.55.
 - **Evaluation:** ROC AUC, average precision (area under the precision recall curve), precision and recall, and the
   capture rate (the share of the bridges that dropped that are found in the top 5%, 10%, 20% and so on of the risk
   ranking), on the 2025 test set. A random ranking would score a ROC AUC of 0.5 and an average precision equal to
@@ -270,4 +281,5 @@ it made the predictions worse.
 The step by step plan for the remaining work is in [`project_plan.md`](project_plan.md). The exploratory analysis
 (schema validation across all 112 files, data quality findings, feature distributions, the label construction, and
 the weather and spending data) is in [`notebooks/eda.ipynb`](../notebooks/eda.ipynb), and the model training is in
-[`notebooks/model_training_step_10.ipynb`](../notebooks/model_training_step_10.ipynb).
+[`notebooks/model_training_step_11.ipynb`](../notebooks/model_training_step_11.ipynb). The Streamlit app is in
+[`app/`](../app).
