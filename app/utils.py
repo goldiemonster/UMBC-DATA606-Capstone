@@ -6,6 +6,7 @@ Every page gets its data and scores from here, so a bridge always shows the same
 from pathlib import Path
 
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 
 import scoring
@@ -20,6 +21,14 @@ BRIDGE_COUNT_PATH = REPO_ROOT / "data" / "processed" / "bridge_deterioration_dat
 KEY = "STRUCTURE_NUMBER_008"
 STATE_NAMES = {"CA": "California", "FL": "Florida", "MD": "Maryland", "MI": "Michigan", "NY": "New York",
                "TX": "Texas", "WA": "Washington"}
+
+# Map backgrounds. Plotly draws the first two from tiles on the internet: OpenStreetMap uses plain image tiles from one
+# server, and CARTO uses a vector style that needs several CARTO servers. "Plain" needs no internet at all.
+BACKGROUNDS = {
+    "Street map (OpenStreetMap)": "open-street-map",
+    "Street map (CARTO)": "carto-positron",
+    "Plain": "white-bg",
+}
 
 TIER_ORDER = ["High", "Medium", "Low"]
 TIER_COLORS = {"High": "#c2362b", "Medium": "#f0a830", "Low": "#5b8db8", "Already Poor": "#7f7f7f"}
@@ -104,11 +113,41 @@ def get_spending_context():
     return (latest / counts.reindex(latest.index)), year
 
 
+def keep_choices():
+    """Keep the sidebar choices when moving between pages (Streamlit forgets a widget's value on a page that does not show it).
+
+    It has to run before any widget is created on the page, so view_selector() calls it first.
+    """
+    for key in ("view", "background"):
+        if key in st.session_state:
+            st.session_state[key] = st.session_state[key]
+
+
+def background_selector():
+    """The sidebar choice of map background. Returns the plotly map style. Call it after view_selector()."""
+    if "background" not in st.session_state:
+        st.session_state["background"] = "Street map (OpenStreetMap)"
+    st.sidebar.radio("Map background", list(BACKGROUNDS), key="background",
+                     help="The street maps are downloaded from the internet. Choose Plain to draw only the bridges, for "
+                          "example when working offline.")
+    st.sidebar.caption("If the map behind the bridges stays blank, your network may be blocking that map provider. Try the "
+                       "other street map, or choose Plain.")
+    return BACKGROUNDS[st.session_state["background"]]
+
+
+def scatter_map(df, style, **kwargs):
+    """A plotly map of points. plotly 5.24 and later call it scatter_map; older versions call it scatter_mapbox."""
+    make_map, style_argument = getattr(px, "scatter_map", None), "map_style"
+    if make_map is None:
+        make_map, style_argument = px.scatter_mapbox, "mapbox_style"
+    return make_map(df, **{style_argument: style}, **kwargs)
+
+
 def view_selector():
     """The sidebar choice between the two views of risk. The choice is kept when moving between pages."""
+    keep_choices()
     if "view" not in st.session_state:
         st.session_state["view"] = "drop"
-    st.session_state["view"] = st.session_state["view"]
     st.sidebar.radio("Risk view", list(VIEWS), format_func=lambda key: VIEWS[key]["radio"], key="view",
                      help="Each view is its own model. The first asks if a bridge's rating will drop. The second asks "
                           "if a bridge that is not Poor now will fall into Poor.")
