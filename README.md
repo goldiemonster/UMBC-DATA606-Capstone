@@ -36,10 +36,12 @@ See [`docs/proposal.md`](docs/proposal.md) for the full proposal and data dictio
   cleaned and in [`data/`](data).
 - **Exploratory data analysis:** done for all three data sources, in [`notebooks/eda.ipynb`](notebooks/eda.ipynb).
 - **Model training:** done, in [`notebooks/`](notebooks). The newest notebook,
-  [`model_training_step_10.ipynb`](notebooks/model_training_step_10.ipynb), has every step on the full 2010 to 2025
-  history, and it saves the trained model to `app/model/deterioration_model.joblib`.
+  [`model_training_step_11.ipynb`](notebooks/model_training_step_11.ipynb), has every step on the full 2010 to 2025
+  history. It saves two models to `app/model/`: one for the chance that a bridge's rating drops, and one for the chance
+  that a bridge falls into Poor condition.
 - **Current risk snapshot:** done. Each bridge's 2025 record with 2025 weather, ready for the app to score.
-- **Streamlit app:** not started yet. Will live in [`app/`](app). It is the last piece.
+- **Streamlit app:** done and tested, in [`app/`](app). It has a home page, a Bridge Lookup page, and a State Risk Map page,
+  and lets the user switch between the two views of risk.
 
 ## What the model has found so far
 
@@ -56,6 +58,10 @@ See [`docs/proposal.md`](docs/proposal.md) for the full proposal and data dictio
 - The model's raw scores run far too high as probabilities, so they are corrected before the app shows them. A bridge in
   the High risk tier (the top 10%) dropped 14.1% of the time in 2025, against 2.5% for the Low tier. High means a rating
   drop is likely, not that the bridge is in bad shape: the bridges most likely to drop are the ones rated 8 or 9.
+- That is why the app has a second model, for bridges that are not Poor yet and may fall into Poor (a lowest rating of 4
+  or below). It is far better at that question (ROC AUC 0.89, against 0.55 for the first model). Its High tier is
+  almost entirely bridges rated 5, holds 59% of the bridges that fell into Poor in 2025, and dropped into Poor 3.25% of
+  the time, against 0.05% for the Low tier.
 
 ## Data
 
@@ -73,7 +79,7 @@ See [`data/README.md`](data/README.md) for what each file contains and how it wa
 data/         Raw bridge files, weather data, state spending data, and the processed model ready dataset
 notebooks/    EDA and model training notebooks
 scripts/      Standalone data pipeline scripts (weather fetch, current risk snapshot)
-app/          Streamlit application (not built yet)
+app/          Streamlit application and the two saved models
 docs/         Proposal, project plan, and presentation
 ```
 
@@ -98,4 +104,12 @@ Then open the notebooks in order:
    earlier model training notebooks show how it was built up one step at a time (see
    [`notebooks/README.md`](notebooks/README.md)).
 
-Once the Streamlit app is built, it will run locally with `streamlit run app/app.py`.
+Then run the app, from the project folder:
+
+```
+streamlit run app/app.py
+```
+
+It opens in your browser. The app reads the saved models in `app/model/` and the snapshot in `data/processed/`, so it
+needs no internet connection apart from the street map background on the two map views (a Map background choice in the
+sidebar offers OpenStreetMap, CARTO, or a Plain background for working offline). See [`app/README.md`](app/README.md) for what each page does and how to read the scores.
