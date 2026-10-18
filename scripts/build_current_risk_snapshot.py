@@ -24,7 +24,8 @@ SNAPSHOT_YEAR = 2025
 
 def load_snapshot() -> pd.DataFrame:
     year_code = str(SNAPSHOT_YEAR)[-2:]
-    frames = [nbi.clean_state_year(nbi.load(state, year_code, usecols=nbi.FEATURE_COLS))
+    usecols = nbi.FEATURE_COLS + ["FACILITY_CARRIED_007", "LOCATION_009"]
+    frames = [nbi.clean_state_year(nbi.load(state, year_code, usecols=usecols))
               for state in nbi.STATES]
     df = pd.concat(frames, ignore_index=True)
     df, bad_coords = nbi.decode_and_validate_coords(df)
@@ -39,6 +40,10 @@ def load_snapshot() -> pd.DataFrame:
     df["TRAFFIC_LANES_ON_028A"] = pd.to_numeric(df["TRAFFIC_LANES_ON_028A"], errors="coerce")
     df["INSPECT_FREQ_MONTHS_091"] = pd.to_numeric(df["INSPECT_FREQ_MONTHS_091"], errors="coerce")
     df["LOWEST_RATING"] = pd.to_numeric(df["LOWEST_RATING"], errors="coerce")
+    # The road and place names come wrapped in quotes and padded with spaces; the app shows them and searches them,
+    # so strip the quotes and collapse runs of spaces
+    for col in ["FACILITY_CARRIED_007", "LOCATION_009"]:
+        df[col] = df[col].str.strip().str.strip("'").str.strip().str.replace(r"\s+", " ", regex=True)
     return df
 
 
@@ -90,7 +95,7 @@ def main() -> None:
         "MAIN_UNIT_SPANS_045", "STRUCTURE_LEN_MT_049", "DECK_WIDTH_MT_052", "TRAFFIC_LANES_ON_028A",
         "DECK_STRUCTURE_TYPE_107", "SCOUR_CRITICAL_113", "OWNER_022", "INSPECT_FREQ_MONTHS_091",
         "DECK_COND_058", "SUPERSTRUCTURE_COND_059", "SUBSTRUCTURE_COND_060", "CULVERT_COND_062",
-        "LOWEST_RATING", "BRIDGE_CONDITION", "lat", "lon",
+        "LOWEST_RATING", "BRIDGE_CONDITION", "FACILITY_CARRIED_007", "LOCATION_009", "lat", "lon",
         "tmax_mean_c", "tmin_mean_c", "tavg_mean_c", "prcp_total_mm", "freeze_thaw_days",
     ]
     df = df[keep_cols]
