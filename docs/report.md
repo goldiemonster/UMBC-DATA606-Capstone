@@ -7,7 +7,6 @@ Prepared for Dr. Chaojie (Jay) Wang
 - YouTube video: [YouTube link]
 - Presentation: https://github.com/goldiemonster/UMBC-DATA606-Capstone/blob/main/docs/BridgeWatch_AI_Final_Presentation.pptx
 - GitHub repository: https://github.com/goldiemonster/UMBC-DATA606-Capstone
-- LinkedIn: [LinkedIn link]
 
 ## 1. Background
 
