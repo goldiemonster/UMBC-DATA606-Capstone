@@ -32,7 +32,7 @@ See [`docs/proposal.md`](docs/proposal.md) for the full proposal and data dictio
 
 ## Project status
 
-- **Data:** done. Bridge inventory and weather for 2010 to 2025, and state bridge spending for 2020 to 2024, are all
+- **Data:** Bridge inventory and weather for 2010 to 2025, and state bridge spending for 2020 to 2024, are all
   cleaned and in [`data/`](data).
 - **Exploratory data analysis:** done for all three data sources, in [`notebooks/eda.ipynb`](notebooks/eda.ipynb).
 - **Model training:** done, in [`notebooks/`](notebooks). The newest notebook,
