@@ -4,7 +4,7 @@ Edmund L. Goldsberry, UMBC Data Science Master's Degree Capstone, Fall 2026
 
 Prepared for Dr. Chaojie (Jay) Wang
 
-- YouTube video: [YouTube link]
+- YouTube video: https://youtu.be/3hTymukJdp0
 - Presentation: https://github.com/goldiemonster/UMBC-DATA606-Capstone/blob/main/docs/BridgeWatch_AI_Final_Presentation.pptx
 - GitHub repository: https://github.com/goldiemonster/UMBC-DATA606-Capstone
 
