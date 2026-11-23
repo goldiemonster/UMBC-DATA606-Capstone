@@ -89,22 +89,32 @@ Each folder has its own README with more detail: [`data/README.md`](data/README.
 
 ## Getting started
 
-Install the packages the notebooks and app use:
+From the project folder, install the packages the notebooks and app use:
 
 ```
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-Then open the notebooks in order:
+To run the notebooks, install JupyterLab and its Python kernel, then launch it from the `notebooks/` folder.
+The notebooks use relative paths such as `../data` and `../app`, so keep that folder as their working directory.
+
+```
+python -m pip install jupyterlab ipykernel
+cd notebooks
+python -m jupyterlab
+```
+
+In JupyterLab, select the Python kernel for the environment where you installed the packages. Run the cells
+from top to bottom in this order:
 
 1. [`notebooks/eda.ipynb`](notebooks/eda.ipynb): builds the model ready bridge dataset, walks through the data
    quality checks behind it, and explores the weather and state spending data.
-2. [`notebooks/model_training_step_10.ipynb`](notebooks/model_training_step_10.ipynb): the complete model training
-   notebook. It loads its data straight from this GitHub repository, so it runs without downloading anything. The
-   earlier model training notebooks show how it was built up one step at a time (see
+2. [`notebooks/model_training_step_11.ipynb`](notebooks/model_training_step_11.ipynb): the current, complete model
+   training notebook. It loads data from this GitHub repository, with a local fallback, and saves both models
+   to `app/model/`. The earlier model training notebooks show how it was built up one step at a time (see
    [`notebooks/README.md`](notebooks/README.md)).
 
-Then run the app, from the project folder:
+Then run the app from the project folder (use `cd ..` first if your terminal is still in `notebooks/`):
 
 ```
 streamlit run app/app.py
